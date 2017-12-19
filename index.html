@@ -9,7 +9,8 @@
     <link rel="stylesheet" type="text/css" href="main.css">
 
     <script src="https://cdn.rawgit.com/ethereum/web3.js/develop/dist/web3.min.js"></script>
-
+    <script src="ethjs-signer.min.js"></script>
+    <script src="zero-client-provider.js"></script>
 </head>
 <body>
     <div class="container">
@@ -33,6 +34,7 @@
     <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js"></script>
 
     <script>
+        var sign = ethSigner.sign;
         // if (typeof web3 !== 'undefined') {
         //     web3 = new Web3(web3.currentProvider);
         // } else {
@@ -43,15 +45,29 @@
 
         
         //testing infura
-        web3 = new Web3(new Web3.providers.HttpProvider("https://rinkeby.infura.io/svQrZJFfqBUisljJTEbT"));
-        web3.eth.defaultAccount = '0xFc3AdaDD00aA7b5d1f4CE014665685aB0388c5A7';
+        /*web3 = new Web3(new Web3.providers.HttpProvider("https://rinkeby.infura.io/svQrZJFfqBUisljJTEbT"));
+        web3.eth.defaultAccount = '0xFc3AdaDD00aA7b5d1f4CE014665685aB0388c5A7';*/
+        var url = "https://rinkeby.infura.io/svQrZJFfqBUisljJTEbT";
+        var account = "0x9d58bAe70c30213A275791Fe3bFf4f3940Bf57E7";//'0xFc3AdaDD00aA7b5d1f4CE014665685aB0388c5A7';// or web3.eth.accounts[0];
+    var privateKey = "0x388ae0ad536d1a21aeb994fd7de5d5fc37741eebf713be597e931cb6aad671bf";
+    var contractAddr = "0x25a444918b5b850a7457151fE786A72d718b6696"; //"0xcff4afd5bbb3d7398a149568a50cbc6ca8e7511e";
+
+    web3 = new Web3(new ZeroClientProvider({
+        rpcUrl: url,
+		signTransaction: (rawTx, cb) => cb(null, sign(rawTx, privateKey)),
+		getAccounts: (cb) => cb(null, [account]),
+	}));
+    //console.log("web3 version: " + web3.version.api);
+
+    web3.eth.defaultAccount = account;
+
         //ABLE TO GET BALANCE..
-        console.log("Account balance: " + web3.fromWei(web3.eth.getBalance(web3.eth.defaultAccount).toNumber() , 'ether') + ' ether');
+        //console.log("Account balance: " + web3.fromWei(web3.eth.getBalance(web3.eth.defaultAccount).toNumber() , 'ether') + ' ether');
 
 
         var CoursetroContract = web3.eth.contract([{"constant":false,"inputs":[{"name":"_instructorName","type":"string"},{"name":"_instructorAge","type":"uint256"}],"name":"setInstructor","outputs":[],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":true,"inputs":[],"name":"getInstructor","outputs":[{"name":"","type":"string"},{"name":"","type":"uint256"}],"payable":false,"stateMutability":"view","type":"function"},{"inputs":[],"payable":false,"stateMutability":"nonpayable","type":"constructor"},{"anonymous":false,"inputs":[{"indexed":false,"name":"name","type":"string"},{"indexed":false,"name":"age","type":"uint256"}],"name":"InstructorEvent","type":"event"}]);
-        var Coursetro = CoursetroContract.at('0xdebb54f02c2d876b934f0e3d63f777c0a5c55b4c');
-        console.log(Coursetro);
+        var Coursetro = CoursetroContract.at(contractAddr);
+        //console.log(Coursetro);
         var instructorEvent = Coursetro.InstructorEvent({},'latest');
         instructorEvent.watch(function(error, result)
         {
@@ -77,6 +93,7 @@
                         $("#loader").hide();
                         console.log("setInstructor error: " + error);   //ERROR THROWN HERE ALSO..
                     }
+                    console.log(result);
                 }
             );
         });        
